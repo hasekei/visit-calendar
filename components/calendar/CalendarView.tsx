@@ -41,7 +41,10 @@ export function CalendarView({ visits }: CalendarViewProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDate, setDialogDate] = useState<Date>(new Date());
   const [editVisit, setEditVisit] = useState<VisitWithVisitor | undefined>();
-  const [currentTitle, setCurrentTitle] = useState("");
+  const [currentTitle, setCurrentTitle] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}年${now.getMonth() + 1}月`;
+  });
   const [currentView, setCurrentView] = useState("dayGridMonth");
 
   const getApi = (): CalendarApi | null => calRef.current?.getApi() ?? null;

@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { visitSchema, type VisitFormValues } from "@/lib/validations/visit";
 import { generateTimeOptions, buildDateTime, toLocalDateString } from "@/lib/utils";
+import { useSettings } from "@/hooks/useSettings";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,6 +35,15 @@ function toTimeString(isoString: string): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+function addMinutes(time: string, minutes: number): string | null {
+  const [h, m] = time.split(":").map(Number);
+  const total = h * 60 + m + minutes;
+  const endH = Math.floor(total / 60);
+  const endM = total % 60;
+  if (endH > 22 || (endH === 22 && endM > 0)) return null;
+  return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+}
+
 export function VisitForm({
   defaultDate,
   editVisit,
@@ -40,6 +51,9 @@ export function VisitForm({
   onCancel,
   onDelete,
 }: VisitFormProps) {
+  const { settings } = useSettings();
+  const isMounted = useRef(false);
+
   const {
     register,
     handleSubmit,
@@ -60,13 +74,24 @@ export function VisitForm({
           visitor_id: "",
           date: toLocalDateString(defaultDate ?? new Date()),
           start_time: "10:00",
-          end_time: "10:30",
+          end_time: addMinutes("10:00", settings.defaultDurationMinutes) ?? "10:30",
           memo: "",
         },
   });
 
   const startTime = watch("start_time");
   const endTimeOptions = TIME_OPTIONS.filter((t) => t > startTime);
+
+  // 開始時刻が変わったら終了時刻を自動更新（マウント直後の初期値セットは除外）
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+    if (!startTime) return;
+    const autoEnd = addMinutes(startTime, settings.defaultDurationMinutes);
+    if (autoEnd) setValue("end_time", autoEnd, { shouldValidate: true });
+  }, [startTime, settings.defaultDurationMinutes, setValue]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -97,7 +122,9 @@ export function VisitForm({
           <Label>開始時刻</Label>
           <Select
             value={startTime || null}
-            onValueChange={(v) => { if (v) setValue("start_time", v, { shouldValidate: true }); }}
+            onValueChange={(v) => {
+              if (v) setValue("start_time", v, { shouldValidate: true });
+            }}
           >
             <SelectTrigger className={errors.start_time ? "border-destructive" : ""}>
               <SelectValue />
@@ -119,7 +146,9 @@ export function VisitForm({
           <Label>終了時刻</Label>
           <Select
             value={watch("end_time") || null}
-            onValueChange={(v) => { if (v) setValue("end_time", v, { shouldValidate: true }); }}
+            onValueChange={(v) => {
+              if (v) setValue("end_time", v, { shouldValidate: true });
+            }}
           >
             <SelectTrigger className={errors.end_time ? "border-destructive" : ""}>
               <SelectValue />
@@ -154,12 +183,7 @@ export function VisitForm({
 
       <div className="flex justify-between items-center pt-1">
         {onDelete ? (
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            onClick={onDelete}
-          >
+          <Button type="button" variant="destructive" size="sm" onClick={onDelete}>
             削除
           </Button>
         ) : (

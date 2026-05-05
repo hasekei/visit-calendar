@@ -12,13 +12,15 @@ import { VisitDialog } from "@/components/visits/VisitDialog";
 import { useVisits } from "@/hooks/useVisits";
 import { useSelectedDate } from "@/hooks/useSelectedDate";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, List } from "lucide-react";
+import { Plus, Calendar, List, Settings } from "lucide-react";
+import { SettingsDialog } from "@/components/settings/SettingsDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function MainTabs() {
   const { visits, loading } = useVisits();
   const { selectedDate } = useSelectedDate();
   const [addOpen, setAddOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,10 +31,15 @@ export function MainTabs() {
             <Calendar className="h-5 w-5 text-primary" />
             <h1 className="font-bold text-lg">面会管理カレンダー</h1>
           </div>
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            追加
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setSettingsOpen(true)}>
+              <Settings className="h-4 w-4" />
+            </Button>
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              追加
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -72,6 +79,10 @@ export function MainTabs() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         defaultDate={selectedDate}
+      />
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
     </div>
   );
