@@ -108,7 +108,19 @@ export function VisitorNotesTab() {
         <Label>訪問者</Label>
         <Select value={selectedId} onValueChange={(v) => { if (v) setSelectedId(v); }}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue>
+              {selectedVisitor ? (
+                <span className="flex items-center gap-2">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full shrink-0 inline-block"
+                    style={{ backgroundColor: selectedVisitor.color }}
+                  />
+                  {selectedVisitor.name}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">訪問者を選択</span>
+              )}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {visitors.map((v) => (
