@@ -8,11 +8,13 @@ const CalendarView = dynamic(
   { ssr: false, loading: () => <Skeleton className="h-64 w-full" /> }
 );
 import { DayListView } from "@/components/visits/DayListView";
+import { VisitorNotesTab } from "@/components/notes/VisitorNotesTab";
+import { CommentBoard } from "@/components/board/CommentBoard";
 import { VisitDialog } from "@/components/visits/VisitDialog";
 import { useVisits } from "@/hooks/useVisits";
 import { useSelectedDate } from "@/hooks/useSelectedDate";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, List, Settings } from "lucide-react";
+import { Plus, Calendar, List, FileText, MessageSquare, Settings } from "lucide-react";
 import { SettingsDialog } from "@/components/settings/SettingsDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -47,13 +49,21 @@ export function MainTabs() {
       <main className="max-w-4xl mx-auto px-4 py-4">
         <Tabs defaultValue="calendar">
           <TabsList className="w-full mb-4">
-            <TabsTrigger value="calendar" className="flex-1 gap-1.5">
-              <Calendar className="h-4 w-4" />
-              カレンダー
+            <TabsTrigger value="calendar" className="flex-1 gap-1 text-xs sm:text-sm">
+              <Calendar className="h-3.5 w-3.5 shrink-0" />
+              <span>カレンダー</span>
             </TabsTrigger>
-            <TabsTrigger value="day" className="flex-1 gap-1.5">
-              <List className="h-4 w-4" />
-              日別一覧
+            <TabsTrigger value="day" className="flex-1 gap-1 text-xs sm:text-sm">
+              <List className="h-3.5 w-3.5 shrink-0" />
+              <span>日別</span>
+            </TabsTrigger>
+            <TabsTrigger value="notes" className="flex-1 gap-1 text-xs sm:text-sm">
+              <FileText className="h-3.5 w-3.5 shrink-0" />
+              <span>留意事項</span>
+            </TabsTrigger>
+            <TabsTrigger value="board" className="flex-1 gap-1 text-xs sm:text-sm">
+              <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+              <span>掲示板</span>
             </TabsTrigger>
           </TabsList>
 
@@ -71,6 +81,14 @@ export function MainTabs() {
             ) : (
               <DayListView visits={visits} />
             )}
+          </TabsContent>
+
+          <TabsContent value="notes">
+            <VisitorNotesTab />
+          </TabsContent>
+
+          <TabsContent value="board">
+            <CommentBoard />
           </TabsContent>
         </Tabs>
       </main>

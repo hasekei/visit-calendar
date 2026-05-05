@@ -7,6 +7,7 @@ export interface Database {
           name: string;
           color: string;
           sort_order: number;
+          notes: string | null;
           created_at: string;
         };
         Insert: {
@@ -14,12 +15,14 @@ export interface Database {
           name: string;
           color?: string;
           sort_order?: number;
+          notes?: string | null;
           created_at?: string;
         };
         Update: {
           name?: string;
           color?: string;
           sort_order?: number;
+          notes?: string | null;
         };
         Relationships: [];
       };
@@ -58,6 +61,51 @@ export interface Database {
             referencedColumns: ["id"];
           }
         ];
+      };
+      visitor_images: {
+        Row: {
+          id: string;
+          visitor_id: string;
+          storage_path: string;
+          filename: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          visitor_id: string;
+          storage_path: string;
+          filename: string;
+          created_at?: string;
+        };
+        Update: {
+          storage_path?: string;
+          filename?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "visitor_images_visitor_id_fkey";
+            columns: ["visitor_id"];
+            isOneToOne: false;
+            referencedRelation: "visitors";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      comments: {
+        Row: {
+          id: string;
+          username: string;
+          message: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          username: string;
+          message: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

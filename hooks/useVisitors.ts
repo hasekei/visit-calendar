@@ -49,6 +49,7 @@ export function useVisitors() {
         name: data.name,
         color: data.color ?? "#6366f1",
         sort_order: data.sort_order ?? visitors.length,
+        notes: null,
         created_at: new Date().toISOString(),
       };
       setVisitors((prev) => [...prev, optimistic]);
@@ -76,6 +77,17 @@ export function useVisitors() {
 
   const deleteVisitor = useCallback(
     async (id: string) => {
+      // カレンダーに面会データが存在する場合は削除不可
+      const { count } = await supabase
+        .from("visits")
+        .select("id", { count: "exact", head: true })
+        .eq("visitor_id", id);
+
+      if ((count ?? 0) > 0) {
+        toast.error("カレンダーに面会予定があるため削除できません。先に面会を削除してください。");
+        return;
+      }
+
       const prev = visitors.find((v) => v.id === id);
       setVisitors((list) => list.filter((v) => v.id !== id));
       const { error } = await supabase.from("visitors").delete().eq("id", id);

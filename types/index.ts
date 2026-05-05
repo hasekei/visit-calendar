@@ -8,6 +8,12 @@ export type Visit = Database["public"]["Tables"]["visits"]["Row"];
 export type VisitInsert = Database["public"]["Tables"]["visits"]["Insert"];
 export type VisitUpdate = Database["public"]["Tables"]["visits"]["Update"];
 
+export type VisitorImage = Database["public"]["Tables"]["visitor_images"]["Row"];
+export type VisitorImageInsert = Database["public"]["Tables"]["visitor_images"]["Insert"];
+
+export type Comment = Database["public"]["Tables"]["comments"]["Row"];
+export type CommentInsert = Database["public"]["Tables"]["comments"]["Insert"];
+
 export type VisitWithVisitor = Visit & {
   visitor: Visitor;
 };
