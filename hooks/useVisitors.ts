@@ -27,14 +27,13 @@ export function useVisitors() {
   useEffect(() => {
     fetchVisitors().finally(() => setLoading(false));
 
+    const channelName = `visitors-realtime-${crypto.randomUUID()}`;
     const channel = supabase
-      .channel("visitors-realtime")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "visitors" },
-        () => {
-          fetchVisitors();
-        }
+        () => fetchVisitors()
       )
       .subscribe();
 
@@ -53,7 +52,6 @@ export function useVisitors() {
         created_at: new Date().toISOString(),
       };
       setVisitors((prev) => [...prev, optimistic]);
-
       const { error } = await supabase.from("visitors").insert(data);
       if (error) {
         setVisitors((prev) => prev.filter((v) => v.id !== optimistic.id));
@@ -66,14 +64,8 @@ export function useVisitors() {
   const updateVisitor = useCallback(
     async (id: string, data: VisitorUpdate) => {
       const prev = visitors.find((v) => v.id === id);
-      setVisitors((list) =>
-        list.map((v) => (v.id === id ? { ...v, ...data } : v))
-      );
-
-      const { error } = await supabase
-        .from("visitors")
-        .update(data)
-        .eq("id", id);
+      setVisitors((list) => list.map((v) => (v.id === id ? { ...v, ...data } : v)));
+      const { error } = await supabase.from("visitors").update(data).eq("id", id);
       if (error) {
         if (prev) setVisitors((list) => list.map((v) => (v.id === id ? prev : v)));
         toast.error("訪問者の更新に失敗しました");
@@ -86,7 +78,6 @@ export function useVisitors() {
     async (id: string) => {
       const prev = visitors.find((v) => v.id === id);
       setVisitors((list) => list.filter((v) => v.id !== id));
-
       const { error } = await supabase.from("visitors").delete().eq("id", id);
       if (error) {
         if (prev) setVisitors((list) => [...list, prev]);

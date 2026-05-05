@@ -39,13 +39,15 @@ export function useVisits() {
   useEffect(() => {
     fetchAllVisits().finally(() => setLoading(false));
 
+    // ユニークなチャンネル名でReactのStrictMode二重実行を回避
+    const channelName = `visits-realtime-${crypto.randomUUID()}`;
     const channel = supabase
-      .channel("visits-realtime")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "visits" },
         async (payload) => {
-          const visit = await fetchVisitById(payload.new.id);
+          const visit = await fetchVisitById(payload.new.id as string);
           if (visit) setVisits((prev) => [...prev, visit]);
         }
       )
@@ -53,7 +55,7 @@ export function useVisits() {
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "visits" },
         async (payload) => {
-          const updated = await fetchVisitById(payload.new.id);
+          const updated = await fetchVisitById(payload.new.id as string);
           if (updated) {
             setVisits((prev) =>
               prev.map((v) => (v.id === updated.id ? updated : v))
@@ -65,7 +67,9 @@ export function useVisits() {
         "postgres_changes",
         { event: "DELETE", schema: "public", table: "visits" },
         (payload) => {
-          setVisits((prev) => prev.filter((v) => v.id !== payload.old.id));
+          setVisits((prev) =>
+            prev.filter((v) => v.id !== (payload.old as { id: string }).id)
+          );
         }
       )
       .subscribe();
@@ -78,22 +82,15 @@ export function useVisits() {
   const addVisit = useCallback(
     async (data: VisitInsert) => {
       const { error } = await supabase.from("visits").insert(data);
-      if (error) {
-        toast.error("面会の追加に失敗しました");
-      }
+      if (error) toast.error("面会の追加に失敗しました");
     },
     [supabase]
   );
 
   const updateVisit = useCallback(
     async (id: string, data: VisitUpdate) => {
-      const { error } = await supabase
-        .from("visits")
-        .update(data)
-        .eq("id", id);
-      if (error) {
-        toast.error("面会の更新に失敗しました");
-      }
+      const { error } = await supabase.from("visits").update(data).eq("id", id);
+      if (error) toast.error("面会の更新に失敗しました");
     },
     [supabase]
   );
@@ -102,7 +99,6 @@ export function useVisits() {
     async (id: string) => {
       const prev = visits.find((v) => v.id === id);
       setVisits((list) => list.filter((v) => v.id !== id));
-
       const { error } = await supabase.from("visits").delete().eq("id", id);
       if (error) {
         if (prev) setVisits((list) => [...list, prev]);
