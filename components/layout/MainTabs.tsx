@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarView } from "@/components/calendar/CalendarView";
+import dynamic from "next/dynamic";
+const CalendarView = dynamic(
+  () => import("@/components/calendar/CalendarView").then((m) => m.CalendarView),
+  { ssr: false, loading: () => <Skeleton className="h-64 w-full" /> }
+);
 import { DayListView } from "@/components/visits/DayListView";
 import { VisitDialog } from "@/components/visits/VisitDialog";
 import { useVisits } from "@/hooks/useVisits";
@@ -47,13 +51,7 @@ export function MainTabs() {
           </TabsList>
 
           <TabsContent value="calendar">
-            {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-64 w-full" />
-              </div>
-            ) : (
-              <CalendarView visits={visits} />
-            )}
+            <CalendarView visits={visits} />
           </TabsContent>
 
           <TabsContent value="day">

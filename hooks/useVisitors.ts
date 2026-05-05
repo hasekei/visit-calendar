@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Visitor, VisitorInsert, VisitorUpdate } from "@/types";
 import { toast } from "sonner";
@@ -8,7 +8,8 @@ import { toast } from "sonner";
 export function useVisitors() {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
 
   const fetchVisitors = useCallback(async () => {
     const { data, error } = await supabase
