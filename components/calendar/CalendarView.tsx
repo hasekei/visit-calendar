@@ -147,17 +147,43 @@ export function CalendarView({ visits }: CalendarViewProps) {
           allDaySlot={false}
           nowIndicator
           datesSet={updateTitle}
-          eventContent={(arg) => (
-            <div
-              className="px-1 py-0.5 rounded text-white text-xs truncate w-full"
-              style={{ backgroundColor: arg.event.backgroundColor }}
-            >
-              {arg.timeText && (
-                <span className="opacity-80 mr-1">{arg.timeText}</span>
-              )}
-              {arg.event.title}
-            </div>
-          )}
+          eventContent={(arg) => {
+            const start = arg.event.start;
+            const end = arg.event.end;
+            const fmt = (d: Date) =>
+              d.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+            const timeRange =
+              start && end ? `${fmt(start)}〜${fmt(end)}` : (arg.timeText ?? "");
+            const isMonth = arg.view.type === "dayGridMonth";
+            const color = arg.event.backgroundColor;
+            const name = arg.event.title;
+            const memo = arg.event.extendedProps.memo as string | null;
+
+            if (isMonth) {
+              return (
+                <div
+                  className="px-1 py-0.5 rounded text-white w-full overflow-hidden leading-tight"
+                  style={{ backgroundColor: color }}
+                >
+                  <div className="text-[11px] font-semibold truncate">{name}</div>
+                  <div className="text-[10px] opacity-85 tabular-nums">{timeRange}</div>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                className="px-1.5 py-1 rounded text-white h-full overflow-hidden flex flex-col gap-0.5"
+                style={{ backgroundColor: color }}
+              >
+                <div className="text-xs font-semibold leading-tight truncate">{name}</div>
+                <div className="text-[11px] opacity-90 tabular-nums">{timeRange}</div>
+                {memo && (
+                  <div className="text-[10px] opacity-75 line-clamp-2 leading-tight">{memo}</div>
+                )}
+              </div>
+            );
+          }}
         />
       </div>
 
