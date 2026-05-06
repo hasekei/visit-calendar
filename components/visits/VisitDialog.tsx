@@ -6,8 +6,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { VisitForm } from "./VisitForm";
 import { useVisits } from "@/hooks/useVisits";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { buildDateTime } from "@/lib/utils";
 import type { VisitFormValues } from "@/lib/validations/visit";
 import type { VisitWithVisitor } from "@/types";
@@ -22,6 +29,7 @@ interface VisitDialogProps {
 
 export function VisitDialog({ open, onClose, defaultDate, editVisit }: VisitDialogProps) {
   const { addVisit, updateVisit, deleteVisit } = useVisits();
+  const isDesktop = useMediaQuery("(min-width: 640px)");
 
   const title = editVisit ? "面会を編集" : "面会を追加";
 
@@ -72,37 +80,40 @@ export function VisitDialog({ open, onClose, defaultDate, editVisit }: VisitDial
     onClose();
   };
 
+  const form = (
+    <VisitForm
+      defaultDate={defaultDate}
+      editVisit={editVisit}
+      onSubmit={handleSubmit}
+      onBatchSubmit={handleBatchSubmit}
+      onCancel={onClose}
+      onDelete={editVisit ? handleDelete : undefined}
+    />
+  );
+
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
+          {form}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      {/*
-        モバイル: 画面下部に固定・フル幅・スクロール可
-        sm以上: 中央寄せの通常Dialogレイアウト
-      */}
-      <DialogContent
-        className="
-          bottom-0 left-0 right-0 top-auto
-          translate-x-0 translate-y-0
-          max-w-none w-full
-          rounded-t-2xl rounded-b-none
-          max-h-[92dvh] overflow-y-auto
-          sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2
-          sm:-translate-x-1/2 sm:-translate-y-1/2
-          sm:max-w-md
-          sm:rounded-xl sm:max-h-none sm:overflow-y-visible
-        "
-      >
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <VisitForm
-          defaultDate={defaultDate}
-          editVisit={editVisit}
-          onSubmit={handleSubmit}
-          onBatchSubmit={handleBatchSubmit}
-          onCancel={onClose}
-          onDelete={editVisit ? handleDelete : undefined}
-        />
-      </DialogContent>
-    </Dialog>
+    <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
+      <DrawerContent className="max-h-[92dvh]">
+        <DrawerHeader className="text-left">
+          <DrawerTitle>{title}</DrawerTitle>
+        </DrawerHeader>
+        <div className="overflow-y-auto px-4 pb-6">
+          {form}
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 }
