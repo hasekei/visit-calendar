@@ -6,15 +6,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import { VisitForm } from "./VisitForm";
 import { useVisits } from "@/hooks/useVisits";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { buildDateTime } from "@/lib/utils";
 import type { VisitFormValues } from "@/lib/validations/visit";
 import type { VisitWithVisitor } from "@/types";
@@ -29,7 +22,6 @@ interface VisitDialogProps {
 
 export function VisitDialog({ open, onClose, defaultDate, editVisit }: VisitDialogProps) {
   const { addVisit, updateVisit, deleteVisit } = useVisits();
-  const isDesktop = useMediaQuery("(min-width: 640px)");
 
   const title = editVisit ? "面会を編集" : "面会を追加";
 
@@ -80,44 +72,24 @@ export function VisitDialog({ open, onClose, defaultDate, editVisit }: VisitDial
     onClose();
   };
 
-  const form = (
-    <VisitForm
-      defaultDate={defaultDate}
-      editVisit={editVisit}
-      onSubmit={handleSubmit}
-      onBatchSubmit={handleBatchSubmit}
-      onCancel={onClose}
-      onDelete={editVisit ? handleDelete : undefined}
-    />
-  );
-
-  if (isDesktop) {
-    return (
-      <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-          </DialogHeader>
-          {form}
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
-    <Drawer open={open} onOpenChange={(o) => !o && onClose()} dismissible={false}>
-      <DrawerContent
-        className="max-h-[92dvh]"
-        onInteractOutside={(e) => e.preventDefault()}
-        onPointerDownOutside={(e) => e.preventDefault()}
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent
+        showCloseButton={false}
+        className="top-4 sm:top-1/2 sm:-translate-y-1/2 max-h-[92dvh] overflow-y-auto sm:max-w-md w-[calc(100%-2rem)]"
       >
-        <DrawerHeader className="text-left">
-          <DrawerTitle>{title}</DrawerTitle>
-        </DrawerHeader>
-        <div className="overflow-y-auto px-4 pb-6">
-          {form}
-        </div>
-      </DrawerContent>
-    </Drawer>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <VisitForm
+          defaultDate={defaultDate}
+          editVisit={editVisit}
+          onSubmit={handleSubmit}
+          onBatchSubmit={handleBatchSubmit}
+          onCancel={onClose}
+          onDelete={editVisit ? handleDelete : undefined}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }
