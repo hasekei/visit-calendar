@@ -25,7 +25,8 @@ interface VisitorSelectProps {
 }
 
 export function VisitorSelect({ value, onChange, error, fallbackVisitor }: VisitorSelectProps) {
-  const { visitors } = useVisitors();
+  const { visitors: allVisitors } = useVisitors();
+  const visitors = allVisitors.filter((v) => v.name && v.name.trim() !== "");
   const [managerOpen, setManagerOpen] = useState(false);
 
   const found = value ? visitors.find((v) => v.id === value) : null;

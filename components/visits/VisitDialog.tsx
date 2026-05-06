@@ -105,10 +105,11 @@ export function VisitDialog({ open, onClose, defaultDate, editVisit }: VisitDial
   }
 
   return (
-    <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
+    <Drawer open={open} onOpenChange={(o) => !o && onClose()} dismissible={false}>
       <DrawerContent
         className="max-h-[92dvh]"
         onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DrawerHeader className="text-left">
           <DrawerTitle>{title}</DrawerTitle>
