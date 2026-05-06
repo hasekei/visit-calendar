@@ -43,7 +43,7 @@ export function VisitorNotesTab() {
     }
   }, [visitors, visitorsLoading, selectedId]);
 
-  // 個別訪問者が変わったら留意事項と画像を読み込む
+  // 個別訪問者が変わったら周知事項と画像を読み込む
   useEffect(() => {
     if (isAll || !selectedVisitor) {
       setNotes("");
@@ -76,7 +76,7 @@ export function VisitorNotesTab() {
     if (!selectedId || isAll) return;
     setSaving(true);
     await updateVisitor(selectedId, { notes: notes || null });
-    toast.success("留意事項を保存しました");
+    toast.success("周知事項を保存しました");
     setSaving(false);
   };
 
@@ -241,13 +241,13 @@ export function VisitorNotesTab() {
       {/* 個別訪問者の編集 */}
       {selectedVisitor && !isAll && (
         <>
-          {/* 留意事項テキスト */}
+          {/* 周知事項テキスト */}
           <div className="space-y-1.5">
-            <Label>留意事項・コメント</Label>
+            <Label>周知事項・コメント</Label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="アレルギー、持病、面会時の注意点など..."
+              placeholder="周知したいこと"
               rows={5}
               className="resize-none"
             />
@@ -257,7 +257,7 @@ export function VisitorNotesTab() {
               disabled={saving}
               className="w-full"
             >
-              {saving ? "保存中..." : "留意事項を保存"}
+              {saving ? "保存中..." : "周知事項を保存"}
             </Button>
           </div>
 

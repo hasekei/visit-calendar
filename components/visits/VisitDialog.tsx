@@ -49,6 +49,22 @@ export function VisitDialog({ open, onClose, defaultDate, editVisit }: VisitDial
     onClose();
   };
 
+  const handleBatchSubmit = async (
+    dates: string[],
+    baseData: Omit<VisitFormValues, "date">
+  ) => {
+    for (const date of dates) {
+      await addVisit({
+        visitor_id: baseData.visitor_id,
+        start_time: buildDateTime(date, baseData.start_time),
+        end_time: buildDateTime(date, baseData.end_time),
+        memo: baseData.memo ?? null,
+      });
+    }
+    toast.success(`${dates.length}件の面会を追加しました`);
+    onClose();
+  };
+
   const handleDelete = async () => {
     if (!editVisit) return;
     await deleteVisit(editVisit.id);
@@ -82,6 +98,7 @@ export function VisitDialog({ open, onClose, defaultDate, editVisit }: VisitDial
           defaultDate={defaultDate}
           editVisit={editVisit}
           onSubmit={handleSubmit}
+          onBatchSubmit={handleBatchSubmit}
           onCancel={onClose}
           onDelete={editVisit ? handleDelete : undefined}
         />

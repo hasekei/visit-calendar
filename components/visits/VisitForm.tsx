@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { visitSchema, type VisitFormValues } from "@/lib/validations/visit";
@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { VisitorSelect } from "@/components/visitors/VisitorSelect";
 import type { VisitWithVisitor } from "@/types";
+import { CalendarDays, X, Plus } from "lucide-react";
 
 const TIME_OPTIONS = generateTimeOptions();
 
@@ -26,6 +27,7 @@ interface VisitFormProps {
   defaultDate?: Date;
   editVisit?: VisitWithVisitor;
   onSubmit: (data: VisitFormValues) => Promise<void>;
+  onBatchSubmit?: (dates: string[], data: Omit<VisitFormValues, "date">) => Promise<void>;
   onCancel: () => void;
   onDelete?: () => void;
 }
@@ -44,15 +46,29 @@ function addMinutes(time: string, minutes: number): string | null {
   return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
 }
 
+function formatDateChip(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short" });
+}
+
 export function VisitForm({
   defaultDate,
   editVisit,
   onSubmit,
+  onBatchSubmit,
   onCancel,
   onDelete,
 }: VisitFormProps) {
   const { settings } = useSettings();
   const isMounted = useRef(false);
+  const addDateRef = useRef<HTMLInputElement>(null);
+
+  const defaultDateStr = editVisit
+    ? toLocalDateString(new Date(editVisit.start_time))
+    : toLocalDateString(defaultDate ?? new Date());
+
+  const [isMultiDate, setIsMultiDate] = useState(false);
+  const [multiDates, setMultiDates] = useState<string[]>([defaultDateStr]);
 
   const {
     register,
@@ -72,7 +88,7 @@ export function VisitForm({
         }
       : {
           visitor_id: "",
-          date: toLocalDateString(defaultDate ?? new Date()),
+          date: defaultDateStr,
           start_time: "10:00",
           end_time: addMinutes("10:00", settings.defaultDurationMinutes) ?? "10:30",
           memo: "",
@@ -82,7 +98,6 @@ export function VisitForm({
   const startTime = watch("start_time");
   const endTimeOptions = TIME_OPTIONS.filter((t) => t > startTime);
 
-  // 開始時刻が変わったら終了時刻を自動更新（マウント直後の初期値セットは除外）
   useEffect(() => {
     if (!isMounted.current) {
       isMounted.current = true;
@@ -93,8 +108,46 @@ export function VisitForm({
     if (autoEnd) setValue("end_time", autoEnd, { shouldValidate: true });
   }, [startTime, settings.defaultDurationMinutes, setValue]);
 
+  // マルチ日付モード時はdateフィールドを先頭日付に同期
+  useEffect(() => {
+    if (isMultiDate && multiDates.length > 0) {
+      setValue("date", multiDates[0], { shouldValidate: false });
+    }
+  }, [isMultiDate, multiDates, setValue]);
+
+  const handleToggleMultiDate = () => {
+    const next = !isMultiDate;
+    setIsMultiDate(next);
+    if (next) {
+      setMultiDates([watch("date") || defaultDateStr]);
+    } else {
+      if (multiDates.length > 0) {
+        setValue("date", multiDates[0], { shouldValidate: false });
+      }
+    }
+  };
+
+  const addDate = (dateStr: string) => {
+    if (!dateStr || multiDates.includes(dateStr) || multiDates.length >= 7) return;
+    setMultiDates((prev) => [...prev, dateStr].sort());
+    if (addDateRef.current) addDateRef.current.value = "";
+  };
+
+  const removeDate = (dateStr: string) => {
+    setMultiDates((prev) => prev.filter((d) => d !== dateStr));
+  };
+
+  const handleFormSubmit = handleSubmit(async (data) => {
+    if (isMultiDate && onBatchSubmit && multiDates.length > 0) {
+      const { date: _date, ...rest } = data;
+      await onBatchSubmit(multiDates, rest);
+    } else {
+      await onSubmit(data);
+    }
+  });
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleFormSubmit} className="space-y-4">
       <div className="space-y-1.5">
         <Label>訪問者</Label>
         <VisitorSelect
@@ -105,16 +158,92 @@ export function VisitForm({
         />
       </div>
 
+      {/* 日付（新規登録時のみ複数日対応） */}
       <div className="space-y-1.5">
-        <Label htmlFor="date">日付</Label>
-        <Input
-          id="date"
-          type="date"
-          {...register("date")}
-          className={errors.date ? "border-destructive" : ""}
-        />
-        {errors.date && (
-          <p className="text-xs text-destructive">{errors.date.message}</p>
+        {!editVisit ? (
+          <>
+            <div className="flex items-center justify-between">
+              <Label>日付</Label>
+              <button
+                type="button"
+                onClick={handleToggleMultiDate}
+                className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                  isMultiDate
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted text-muted-foreground border-border hover:text-foreground"
+                }`}
+              >
+                <CalendarDays className="h-3 w-3" />
+                複数日を選択
+              </button>
+            </div>
+
+            {isMultiDate ? (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1.5 p-2 rounded-lg border bg-muted/30 min-h-10">
+                  {multiDates.map((d) => (
+                    <span
+                      key={d}
+                      className="inline-flex items-center gap-1 bg-primary/15 text-primary text-xs px-2 py-1 rounded-full"
+                    >
+                      {formatDateChip(d)}
+                      <button
+                        type="button"
+                        onClick={() => removeDate(d)}
+                        className="hover:opacity-70 transition-opacity"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                  {multiDates.length < 7 && (
+                    <label className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border border-dashed border-muted-foreground text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
+                      <Plus className="h-3 w-3" />
+                      追加
+                      <input
+                        ref={addDateRef}
+                        type="date"
+                        className="sr-only"
+                        onChange={(e) => {
+                          addDate(e.target.value);
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {multiDates.length}/7日 選択中
+                  {multiDates.length === 0 && (
+                    <span className="text-destructive ml-1">日付を1つ以上選択してください</span>
+                  )}
+                </p>
+              </div>
+            ) : (
+              <>
+                <Input
+                  type="date"
+                  {...register("date")}
+                  className={errors.date ? "border-destructive" : ""}
+                />
+                {errors.date && (
+                  <p className="text-xs text-destructive mt-0.5">{errors.date.message}</p>
+                )}
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            <Label htmlFor="date">日付</Label>
+            <Input
+              id="date"
+              type="date"
+              {...register("date")}
+              className={errors.date ? "border-destructive" : ""}
+            />
+            {errors.date && (
+              <p className="text-xs text-destructive mt-0.5">{errors.date.message}</p>
+            )}
+          </>
         )}
       </div>
 
@@ -194,8 +323,15 @@ export function VisitForm({
           <Button type="button" variant="ghost" onClick={onCancel}>
             キャンセル
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "保存中..." : "保存"}
+          <Button
+            type="submit"
+            disabled={isSubmitting || (isMultiDate && multiDates.length === 0)}
+          >
+            {isSubmitting
+              ? "保存中..."
+              : isMultiDate && multiDates.length > 1
+              ? `${multiDates.length}日分を保存`
+              : "保存"}
           </Button>
         </div>
       </div>

@@ -86,7 +86,7 @@ export function MainTabs() {
               const items = {
                 calendar: { icon: <Calendar className="h-3.5 w-3.5 shrink-0" />, label: "カレンダー" },
                 day:      { icon: <List      className="h-3.5 w-3.5 shrink-0" />, label: "日別" },
-                notes:    { icon: <FileText  className="h-3.5 w-3.5 shrink-0" />, label: "留意事項" },
+                notes:    { icon: <FileText  className="h-3.5 w-3.5 shrink-0" />, label: "周知事項" },
                 board:    { icon: <MessageSquare className="h-3.5 w-3.5 shrink-0" />, label: "掲示板" },
               };
               return (
