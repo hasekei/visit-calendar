@@ -49,6 +49,15 @@ export function MainTabs() {
       <div className="border-b bg-muted/40">
         <div className="max-w-4xl mx-auto px-4 py-2 flex gap-3 flex-wrap">
           <a
+            href="https://nih.or.jp/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            <ExternalLink className="h-3 w-3 shrink-0" />
+            大阪整形外科病院
+          </a>
+          <a
             href="https://nih.or.jp/access/"
             target="_blank"
             rel="noopener noreferrer"

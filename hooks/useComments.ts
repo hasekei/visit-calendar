@@ -107,11 +107,15 @@ export function useComments() {
     [supabase]
   );
 
-  // 最新コメントの「見たよ」で全コメントに一括反映
+  // 最新コメントの「見たよ」で自分以外のコメントに一括反映
   const toggleSeenBatch = useCallback(
     async (commentsList: Comment[], visitorName: string, markAs: boolean) => {
+      // 自分が投稿したコメントは対象外
+      const targets = commentsList.filter((c) => c.username !== visitorName);
+
       setComments((prev) =>
         prev.map((c) => {
+          if (c.username === visitorName) return c;
           const seenBy = c.seen_by ?? [];
           const newSeenBy = markAs
             ? seenBy.includes(visitorName) ? seenBy : [...seenBy, visitorName]
@@ -121,7 +125,7 @@ export function useComments() {
       );
 
       await Promise.all(
-        commentsList.map((c) => {
+        targets.map((c) => {
           const seenBy = c.seen_by ?? [];
           const newSeenBy = markAs
             ? seenBy.includes(visitorName) ? seenBy : [...seenBy, visitorName]

@@ -153,7 +153,7 @@ export function CommentBoard() {
           className="w-full"
         >
           <Send className="h-3.5 w-3.5 mr-1.5" />
-          {sending ? "送信中..." : "送信（Ctrl+Enter）"}
+          {sending ? "送信中..." : "送信"}
         </Button>
       </div>
 
