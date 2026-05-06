@@ -21,11 +21,15 @@ interface VisitorSelectProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  fallbackVisitor?: { name: string; color: string };
 }
 
-export function VisitorSelect({ value, onChange, error }: VisitorSelectProps) {
+export function VisitorSelect({ value, onChange, error, fallbackVisitor }: VisitorSelectProps) {
   const { visitors } = useVisitors();
   const [managerOpen, setManagerOpen] = useState(false);
+
+  const found = value ? visitors.find((v) => v.id === value) : null;
+  const displayVisitor = found ?? (value && fallbackVisitor ? fallbackVisitor : null);
 
   return (
     <div className="space-y-1">
@@ -39,19 +43,15 @@ export function VisitorSelect({ value, onChange, error }: VisitorSelectProps) {
           className={`w-full ${error ? "border-destructive" : ""}`}
         >
           <SelectValue placeholder="訪問者を選択">
-            {value &&
-              (() => {
-                const v = visitors.find((v) => v.id === value);
-                return v ? (
-                  <span className="flex items-center gap-2">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: v.color }}
-                    />
-                    {v.name}
-                  </span>
-                ) : null;
-              })()}
+            {displayVisitor ? (
+              <span className="flex items-center gap-2">
+                <span
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: displayVisitor.color }}
+                />
+                {displayVisitor.name}
+              </span>
+            ) : null}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>

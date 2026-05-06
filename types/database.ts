@@ -97,14 +97,18 @@ export interface Database {
           username: string;
           message: string;
           created_at: string;
+          seen_by: string[];
         };
         Insert: {
           id?: string;
           username: string;
           message: string;
           created_at?: string;
+          seen_by?: string[];
         };
-        Update: never;
+        Update: {
+          seen_by?: string[];
+        };
         Relationships: [];
       };
     };

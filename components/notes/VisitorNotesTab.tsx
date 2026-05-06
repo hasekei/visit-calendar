@@ -6,6 +6,7 @@ import { useVisitorImages } from "@/hooks/useVisitorImages";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -22,13 +23,17 @@ export function VisitorNotesTab() {
   const { visitors, loading: visitorsLoading, updateVisitor } = useVisitors();
   const { fetchImages, getImageUrl, uploadImage, deleteImage } = useVisitorImages();
 
-  const [selectedId, setSelectedId] = useState("");
+  const [selectedId, setSelectedId] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [images, setImages] = useState<VisitorImage[]>([]);
+  const [allImages, setAllImages] = useState<Record<string, VisitorImage[]>>({});
+  const [loadingAll, setLoadingAll] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isAll = selectedId === "ALL";
   const selectedVisitor = visitors.find((v) => v.id === selectedId);
 
   // 最初の訪問者を自動選択
@@ -38,19 +43,37 @@ export function VisitorNotesTab() {
     }
   }, [visitors, visitorsLoading, selectedId]);
 
-  // 訪問者が変わったら留意事項と画像を読み込む
+  // 個別訪問者が変わったら留意事項と画像を読み込む
   useEffect(() => {
-    if (!selectedVisitor) {
+    if (isAll || !selectedVisitor) {
       setNotes("");
       setImages([]);
       return;
     }
     setNotes(selectedVisitor.notes ?? "");
     fetchImages(selectedVisitor.id).then(setImages);
-  }, [selectedVisitor, fetchImages]);
+  }, [selectedVisitor, isAll, fetchImages]);
+
+  // 「全て」選択時に全訪問者の画像を一括取得
+  useEffect(() => {
+    if (!isAll || visitors.length === 0) return;
+    setLoadingAll(true);
+    Promise.all(
+      visitors.map((v) =>
+        fetchImages(v.id).then((imgs) => ({ id: v.id, imgs }))
+      )
+    ).then((results) => {
+      const map: Record<string, VisitorImage[]> = {};
+      results.forEach(({ id, imgs }) => {
+        map[id] = imgs;
+      });
+      setAllImages(map);
+      setLoadingAll(false);
+    });
+  }, [isAll, visitors, fetchImages]);
 
   const handleSaveNotes = async () => {
-    if (!selectedId) return;
+    if (!selectedId || isAll) return;
     setSaving(true);
     await updateVisitor(selectedId, { notes: notes || null });
     toast.success("留意事項を保存しました");
@@ -59,7 +82,7 @@ export function VisitorNotesTab() {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !selectedId) return;
+    if (!file || !selectedId || isAll) return;
     if (!file.type.startsWith("image/")) {
       toast.error("画像ファイルを選択してください");
       return;
@@ -103,13 +126,29 @@ export function VisitorNotesTab() {
 
   return (
     <div className="space-y-5">
+      {/* 画像ポップアップ */}
+      <Dialog open={!!lightboxSrc} onOpenChange={() => setLightboxSrc(null)}>
+        <DialogContent className="max-w-3xl p-2 bg-black/95">
+          {lightboxSrc && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={lightboxSrc}
+              alt="拡大表示"
+              className="w-full h-auto max-h-[85dvh] object-contain rounded"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* 訪問者選択 */}
       <div className="space-y-1.5">
         <Label>訪問者</Label>
         <Select value={selectedId} onValueChange={(v) => { if (v) setSelectedId(v); }}>
           <SelectTrigger>
             <SelectValue>
-              {selectedVisitor ? (
+              {isAll ? (
+                <span className="font-medium">全て</span>
+              ) : selectedVisitor ? (
                 <span className="flex items-center gap-2">
                   <span
                     className="w-2.5 h-2.5 rounded-full shrink-0 inline-block"
@@ -123,6 +162,9 @@ export function VisitorNotesTab() {
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="ALL">
+              <span className="font-medium">全て</span>
+            </SelectItem>
             {visitors.map((v) => (
               <SelectItem key={v.id} value={v.id}>
                 <span className="flex items-center gap-2">
@@ -138,7 +180,66 @@ export function VisitorNotesTab() {
         </Select>
       </div>
 
-      {selectedVisitor && (
+      {/* 全て表示 */}
+      {isAll && (
+        <>
+          {loadingAll ? (
+            <div className="space-y-3">
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-28 w-full" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {visitors.map((v) => {
+                const visitorImages = allImages[v.id] ?? [];
+                const hasNotes = v.notes && v.notes.trim();
+                const hasImages = visitorImages.length > 0;
+                return (
+                  <div key={v.id} className="border rounded-xl p-4 bg-card space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-3 h-3 rounded-full shrink-0 inline-block"
+                        style={{ backgroundColor: v.color }}
+                      />
+                      <span className="font-semibold text-sm">{v.name}</span>
+                    </div>
+                    {!hasNotes && !hasImages && (
+                      <p className="text-xs text-muted-foreground">登録なし</p>
+                    )}
+                    {hasNotes && (
+                      <p className="text-sm whitespace-pre-wrap text-foreground/80 bg-muted/40 rounded-lg p-3 leading-relaxed">
+                        {v.notes}
+                      </p>
+                    )}
+                    {hasImages && (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {visitorImages.map((img) => (
+                          <button
+                            key={img.id}
+                            type="button"
+                            onClick={() => setLightboxSrc(getImageUrl(img.storage_path))}
+                            className="aspect-square overflow-hidden rounded-lg border bg-muted hover:opacity-80 transition-opacity"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={getImageUrl(img.storage_path)}
+                              alt={img.filename}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* 個別訪問者の編集 */}
+      {selectedVisitor && !isAll && (
         <>
           {/* 留意事項テキスト */}
           <div className="space-y-1.5">
@@ -191,14 +292,18 @@ export function VisitorNotesTab() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {images.map((img) => (
                   <div key={img.id} className="relative group">
-                    <div className="aspect-square overflow-hidden rounded-lg border bg-muted">
+                    <button
+                      type="button"
+                      onClick={() => setLightboxSrc(getImageUrl(img.storage_path))}
+                      className="block w-full aspect-square overflow-hidden rounded-lg border bg-muted hover:opacity-80 transition-opacity"
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={getImageUrl(img.storage_path)}
                         alt={img.filename}
                         className="w-full h-full object-cover"
                       />
-                    </div>
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteImage(img)}

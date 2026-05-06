@@ -38,6 +38,17 @@ export function useComments() {
       )
       .on(
         "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "comments" },
+        (payload) => {
+          setComments((prev) =>
+            prev.map((c) =>
+              c.id === (payload.new as Comment).id ? (payload.new as Comment) : c
+            )
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
         { event: "DELETE", schema: "public", table: "comments" },
         (payload) => {
           setComments((prev) =>
@@ -70,5 +81,31 @@ export function useComments() {
     [supabase]
   );
 
-  return { comments, loading, addComment, deleteComment };
+  const toggleSeen = useCallback(
+    async (id: string, visitorName: string, currentSeenBy: string[]) => {
+      const already = currentSeenBy.includes(visitorName);
+      const newSeenBy = already
+        ? currentSeenBy.filter((n) => n !== visitorName)
+        : [...currentSeenBy, visitorName];
+
+      setComments((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, seen_by: newSeenBy } : c))
+      );
+
+      const { error } = await supabase
+        .from("comments")
+        .update({ seen_by: newSeenBy })
+        .eq("id", id);
+
+      if (error) {
+        setComments((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, seen_by: currentSeenBy } : c))
+        );
+        toast.error("更新に失敗しました");
+      }
+    },
+    [supabase]
+  );
+
+  return { comments, loading, addComment, deleteComment, toggleSeen };
 }

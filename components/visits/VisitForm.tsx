@@ -101,6 +101,7 @@ export function VisitForm({
           value={watch("visitor_id")}
           onChange={(v) => setValue("visitor_id", v, { shouldValidate: true })}
           error={errors.visitor_id?.message}
+          fallbackVisitor={editVisit?.visitor}
         />
       </div>
 

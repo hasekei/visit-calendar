@@ -67,6 +67,10 @@ const SQL_STEPS = [
     END $$;`,
   },
   {
+    label: "comments seen_by カラム追加",
+    sql: "ALTER TABLE comments ADD COLUMN IF NOT EXISTS seen_by TEXT[] NOT NULL DEFAULT '{}';",
+  },
+  {
     label: "comments Realtime 追加",
     sql: `DO $$ BEGIN
       IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename='comments') THEN
