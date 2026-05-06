@@ -99,21 +99,21 @@ export function CalendarView({ visits }: CalendarViewProps) {
   return (
     <div className="space-y-2">
       {/* カスタムツールバー */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={handlePrev}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1 min-w-0">
+          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handlePrev}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" className="h-8 px-3" onClick={handleToday}>
+          <Button variant="outline" size="sm" className="h-8 px-3 shrink-0" onClick={handleToday}>
             今日
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleNext}>
+          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handleNext}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <span className="text-sm font-medium ml-2">{currentTitle}</span>
+          <span className="text-sm font-medium ml-1 truncate">{currentTitle}</span>
         </div>
 
-        <div className="flex gap-1">
+        <div className="flex gap-1 shrink-0">
           {viewButtons.map((v) => (
             <Button
               key={v.key}
