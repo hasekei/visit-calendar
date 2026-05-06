@@ -307,7 +307,7 @@ export function VisitorNotesTab() {
                     <button
                       type="button"
                       onClick={() => handleDeleteImage(img)}
-                      className="absolute top-1 right-1 bg-black/60 text-white rounded-md p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 right-1 bg-black/60 text-white rounded-md p-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                       title="削除"
                     >
                       <Trash2 className="h-3 w-3" />

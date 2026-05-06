@@ -45,13 +45,12 @@ function isNew(iso: string): boolean {
 }
 
 export function CommentBoard() {
-  const { comments, loading, addComment, deleteComment, toggleSeen } = useComments();
+  const { comments, loading, addComment, deleteComment, toggleSeen, toggleSeenBatch } = useComments();
   const { visitors, loading: visitorsLoading } = useVisitors();
   const [selectedVisitorId, setSelectedVisitorId] = useState<string>("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
-  // localStorage から前回の訪問者選択を復元
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) setSelectedVisitorId(saved);
@@ -74,12 +73,22 @@ export function CommentBoard() {
     setSending(false);
   };
 
-  const handleToggleSeen = async (commentId: string, seenBy: string[]) => {
+  const handleToggleSeen = async (
+    commentId: string,
+    seenBy: string[],
+    isNewest: boolean
+  ) => {
     if (!selectedName) {
       toast.error("「訪問者」を選択してから「見たよ」を押してください");
       return;
     }
-    await toggleSeen(commentId, selectedName, seenBy);
+    if (isNewest) {
+      // 最新コメントへの「見たよ」は全コメントに一括反映
+      const alreadySeen = seenBy.includes(selectedName);
+      await toggleSeenBatch(comments, selectedName, !alreadySeen);
+    } else {
+      await toggleSeen(commentId, selectedName, seenBy);
+    }
   };
 
   if (loading || visitorsLoading) {
@@ -98,7 +107,10 @@ export function CommentBoard() {
       <div className="border rounded-xl p-4 space-y-3 bg-card">
         <div className="space-y-1.5">
           <Label>訪問者</Label>
-          <Select value={selectedVisitorId || null} onValueChange={(v) => { if (v) handleVisitorChange(v); }}>
+          <Select
+            value={selectedVisitorId || null}
+            onValueChange={(v) => { if (v) handleVisitorChange(v); }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="名前を選択してください">
                 {selectedVisitor ? (
@@ -157,21 +169,23 @@ export function CommentBoard() {
         </Button>
       </div>
 
-      {/* コメント一覧 */}
+      {/* コメント一覧（スクロール可能） */}
       {comments.length === 0 ? (
         <p className="text-center text-muted-foreground py-6 text-sm">
           まだ書き込みがありません
         </p>
       ) : (
-        <ul className="space-y-3">
-          {comments.map((c) => {
+        <div className="max-h-[60dvh] overflow-y-auto space-y-3 pr-0.5">
+          {comments.map((c, i) => {
             const seenBy = c.seen_by ?? [];
             const alreadySeen = !!selectedName && seenBy.includes(selectedName);
             const newer = isNew(c.created_at);
+            const isNewest = i === 0;
+            const isAuthor = !!selectedName && c.username === selectedName;
             return (
-              <li
+              <div
                 key={c.id}
-                className={`border rounded-xl p-3.5 bg-card space-y-2 group ${
+                className={`border rounded-xl p-3.5 bg-card space-y-2 ${
                   newer ? "border-primary/50 bg-primary/5" : ""
                 }`}
               >
@@ -188,30 +202,42 @@ export function CommentBoard() {
                     <span className="text-xs text-muted-foreground tabular-nums">
                       {formatTime(c.created_at)}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => deleteComment(c.id)}
-                      className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="削除"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {/* 投稿者本人のみ削除ボタンを表示 */}
+                    {isAuthor && (
+                      <button
+                        type="button"
+                        onClick={() => deleteComment(c.id)}
+                        className="text-destructive transition-opacity"
+                        title="削除"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <p className="text-sm whitespace-pre-wrap">{c.message}</p>
-                {/* 見たよ */}
+                {/* 見たよ（投稿者本人は押せない） */}
                 <div className="flex items-center gap-2 pt-0.5 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => handleToggleSeen(c.id, seenBy)}
-                    className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                    onClick={() => handleToggleSeen(c.id, seenBy, isNewest)}
+                    disabled={isAuthor}
+                    className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                       alreadySeen
                         ? "bg-green-100 border-green-400 text-green-700 dark:bg-green-900/30 dark:border-green-600 dark:text-green-400"
                         : "bg-muted border-border text-muted-foreground hover:text-foreground"
                     }`}
+                    title={
+                      isAuthor
+                        ? "投稿者本人は押せません"
+                        : isNewest
+                        ? "押すと全メッセージに「見たよ」が付きます"
+                        : "見たよ"
+                    }
                   >
                     <Eye className="h-3 w-3" />
-                    見たよ{seenBy.length > 0 ? `（${seenBy.length}）` : ""}
+                    {isNewest ? "全部見たよ" : "見たよ"}
+                    {seenBy.length > 0 ? `（${seenBy.length}）` : ""}
                   </button>
                   {seenBy.length > 0 && (
                     <span className="text-xs text-muted-foreground">
@@ -219,10 +245,10 @@ export function CommentBoard() {
                     </span>
                   )}
                 </div>
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
     </div>
   );

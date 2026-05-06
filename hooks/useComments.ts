@@ -107,5 +107,31 @@ export function useComments() {
     [supabase]
   );
 
-  return { comments, loading, addComment, deleteComment, toggleSeen };
+  // 最新コメントの「見たよ」で全コメントに一括反映
+  const toggleSeenBatch = useCallback(
+    async (commentsList: Comment[], visitorName: string, markAs: boolean) => {
+      setComments((prev) =>
+        prev.map((c) => {
+          const seenBy = c.seen_by ?? [];
+          const newSeenBy = markAs
+            ? seenBy.includes(visitorName) ? seenBy : [...seenBy, visitorName]
+            : seenBy.filter((n) => n !== visitorName);
+          return { ...c, seen_by: newSeenBy };
+        })
+      );
+
+      await Promise.all(
+        commentsList.map((c) => {
+          const seenBy = c.seen_by ?? [];
+          const newSeenBy = markAs
+            ? seenBy.includes(visitorName) ? seenBy : [...seenBy, visitorName]
+            : seenBy.filter((n) => n !== visitorName);
+          return supabase.from("comments").update({ seen_by: newSeenBy }).eq("id", c.id);
+        })
+      );
+    },
+    [supabase]
+  );
+
+  return { comments, loading, addComment, deleteComment, toggleSeen, toggleSeenBatch };
 }
