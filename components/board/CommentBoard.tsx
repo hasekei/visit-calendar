@@ -24,24 +24,12 @@ function formatTime(iso: string): string {
   const diff = Date.now() - date.getTime();
   if (diff < 60_000) return "たった今";
   if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}分前`;
-  const isToday = new Date().toDateString() === date.toDateString();
-  if (isToday) {
-    return date.toLocaleTimeString("ja-JP", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  }
   return date.toLocaleString("ja-JP", {
     month: "numeric",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function isNew(iso: string): boolean {
-  return Date.now() - new Date(iso).getTime() < 30 * 60_000;
 }
 
 export function CommentBoard() {
@@ -179,19 +167,18 @@ export function CommentBoard() {
           {comments.map((c, i) => {
             const seenBy = c.seen_by ?? [];
             const alreadySeen = !!selectedName && seenBy.includes(selectedName);
-            const newer = isNew(c.created_at);
             const isNewest = i === 0;
             const isAuthor = !!selectedName && c.username === selectedName;
             return (
               <div
                 key={c.id}
                 className={`border rounded-xl p-3.5 bg-card space-y-2 ${
-                  newer ? "border-primary/50 bg-primary/5" : ""
+                  isNewest ? "border-primary/50 bg-primary/5" : ""
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    {newer && (
+                    {isNewest && (
                       <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-bold leading-none shrink-0">
                         NEW
                       </span>

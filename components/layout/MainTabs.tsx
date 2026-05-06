@@ -73,22 +73,24 @@ export function MainTabs() {
       <main className="max-w-4xl mx-auto px-4 py-4">
         <Tabs defaultValue="calendar">
           <TabsList className="w-full mb-4">
-            <TabsTrigger value="calendar" className="flex-1 gap-1 text-xs sm:text-sm">
-              <Calendar className="h-3.5 w-3.5 shrink-0" />
-              <span>カレンダー</span>
-            </TabsTrigger>
-            <TabsTrigger value="day" className="flex-1 gap-1 text-xs sm:text-sm">
-              <List className="h-3.5 w-3.5 shrink-0" />
-              <span>日別</span>
-            </TabsTrigger>
-            <TabsTrigger value="notes" className="flex-1 gap-1 text-xs sm:text-sm">
-              <FileText className="h-3.5 w-3.5 shrink-0" />
-              <span>留意事項</span>
-            </TabsTrigger>
-            <TabsTrigger value="board" className="flex-1 gap-1 text-xs sm:text-sm">
-              <MessageSquare className="h-3.5 w-3.5 shrink-0" />
-              <span>掲示板</span>
-            </TabsTrigger>
+            {(["calendar", "day", "notes", "board"] as const).map((v) => {
+              const items = {
+                calendar: { icon: <Calendar className="h-3.5 w-3.5 shrink-0" />, label: "カレンダー" },
+                day:      { icon: <List      className="h-3.5 w-3.5 shrink-0" />, label: "日別" },
+                notes:    { icon: <FileText  className="h-3.5 w-3.5 shrink-0" />, label: "留意事項" },
+                board:    { icon: <MessageSquare className="h-3.5 w-3.5 shrink-0" />, label: "掲示板" },
+              };
+              return (
+                <TabsTrigger
+                  key={v}
+                  value={v}
+                  className="flex-1 gap-1 text-xs sm:text-sm data-active:bg-primary data-active:text-primary-foreground data-active:font-semibold data-active:shadow-none"
+                >
+                  {items[v].icon}
+                  <span>{items[v].label}</span>
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
 
           <TabsContent value="calendar">
