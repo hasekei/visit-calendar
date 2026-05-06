@@ -146,8 +146,7 @@ export function CalendarView({ visits }: CalendarViewProps) {
               titleFormat: { month: "numeric", day: "numeric" },
             },
           }}
-          height="auto"
-          aspectRatio={1.5}
+          height={560}
           slotMinTime="08:00:00"
           slotMaxTime="23:00:00"
           slotDuration="00:30:00"
