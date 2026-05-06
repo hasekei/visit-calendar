@@ -92,7 +92,7 @@ export function CalendarView({ visits }: CalendarViewProps) {
 
   const viewButtons = [
     { key: "dayGridMonth", label: "月" },
-    { key: "timeGridWeek", label: "週" },
+    { key: "timeGridWeek", label: "3日" },
     { key: "timeGridDay", label: "日" },
   ];
 
@@ -139,9 +139,16 @@ export function CalendarView({ visits }: CalendarViewProps) {
           dateClick={handleDateClick}
           eventClick={handleEventClick}
           dayMaxEvents={3}
+          views={{
+            timeGridWeek: {
+              type: "timeGrid",
+              duration: { days: 3 },
+              titleFormat: { month: "numeric", day: "numeric" },
+            },
+          }}
           height="auto"
           aspectRatio={1.5}
-          slotMinTime="06:00:00"
+          slotMinTime="08:00:00"
           slotMaxTime="23:00:00"
           slotDuration="00:30:00"
           allDaySlot={false}
