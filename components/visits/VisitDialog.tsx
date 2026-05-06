@@ -76,7 +76,7 @@ export function VisitDialog({ open, onClose, defaultDate, editVisit }: VisitDial
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="top-4 sm:top-1/2 sm:-translate-y-1/2 max-h-[92dvh] overflow-y-auto sm:max-w-md w-[calc(100%-2rem)]"
+        className="top-4 translate-y-0 sm:top-1/2 sm:-translate-y-1/2 max-h-[92dvh] overflow-y-auto sm:max-w-md w-[calc(100%-2rem)]"
       >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
