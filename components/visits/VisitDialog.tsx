@@ -106,7 +106,10 @@ export function VisitDialog({ open, onClose, defaultDate, editVisit }: VisitDial
 
   return (
     <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
-      <DrawerContent className="max-h-[92dvh]">
+      <DrawerContent
+        className="max-h-[92dvh]"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DrawerHeader className="text-left">
           <DrawerTitle>{title}</DrawerTitle>
         </DrawerHeader>
